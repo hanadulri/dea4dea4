@@ -1,17 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Jua&family=Outfit:wght@400;600;800;900&display=swap');
 
 :root {
-  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+  --bg-gradient: linear-gradient(135deg, #0284c7 0%, #059669 50%, #15803d 100%);
   --accent-gold: #fbbf24;
   --accent-orange: #f97316;
   --accent-pink: #ec4899;
-  --accent-green: #10b981;
-  --accent-cyan: #06b6d4;
+  --accent-green: #22c55e;
+  --accent-cyan: #38bdf8;
   --accent-purple: #a855f7;
-  --panel-bg: rgba(15, 23, 42, 0.75);
-  --panel-border: rgba(255, 255, 255, 0.15);
+  --panel-bg: rgba(15, 35, 25, 0.82);
+  --panel-border: rgba(255, 255, 255, 0.18);
   --text-main: #f8fafc;
-  --text-muted: #94a3b8;
+  --text-muted: #cbd5e1;
   --font-family: 'Jua', 'Outfit', sans-serif;
 }
 
@@ -192,7 +192,7 @@ header {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at center, rgba(30, 27, 75, 0.7) 0%, rgba(15, 23, 42, 0.95) 100%);
+  background: radial-gradient(circle at center, rgba(6, 95, 70, 0.75) 0%, rgba(15, 35, 25, 0.96) 100%);
   gap: 32px;
   padding: 20px;
   position: relative;

@@ -26,7 +26,7 @@
         </div>
         <div class="stat-badge stage">
           <span>🚩 STAGE</span>
-          <span id="hud-stage-num">1</span>
+          <span id="hud-stage-num">1 / 50</span>
         </div>
       </div>
 
@@ -50,7 +50,7 @@
 
         <div class="menu-buttons">
           <button id="btn-menu-start" class="btn-primary btn-start">
-            <span>🚀</span> 게임 시작
+            <span>🚀</span> <span id="btn-start-label">게임 시작 (1 / 50)</span>
           </button>
           <button id="btn-menu-shop" class="btn-primary btn-shop">
             <span>🛒</span> 똥 포탄 상점
@@ -196,9 +196,9 @@
 
       <!-- VICTORY POPUP MODAL -->
       <div id="victory-modal" class="victory-modal">
-        <span style="font-size: 4rem;">🎉</span>
-        <h2 class="victory-title">STAGE CLEAR!</h2>
-        <p style="color: var(--text-muted); font-size: 1.1rem;">허수아비 목표를 물리쳤습니다!</p>
+        <span id="victory-icon" style="font-size: 4rem;">🎉</span>
+        <h2 id="victory-title" class="victory-title">STAGE CLEAR!</h2>
+        <p id="victory-desc" style="color: var(--text-muted); font-size: 1.1rem;">허수아비 목표를 물리쳤습니다!</p>
         <div class="reward-badge">
           <span>💰</span>
           <span id="victory-reward-amount">+350 G</span>
@@ -271,8 +271,18 @@
         modal.style.display = 'flex';
       }
 
+      function updateMenuStageLabel() {
+        const stageLabel = document.getElementById('btn-start-label');
+        if (stageLabel && window.gameEngine) {
+          stageLabel.textContent = `게임 시작 (${window.gameEngine.stage} / 50)`;
+        }
+      }
+
       // Nav Listeners
-      document.getElementById('btn-nav-home').addEventListener('click', () => showScreen(screens.mainMenu));
+      document.getElementById('btn-nav-home').addEventListener('click', () => {
+        showScreen(screens.mainMenu);
+        updateMenuStageLabel();
+      });
       document.getElementById('btn-nav-shop').addEventListener('click', () => { renderShop(); openModal(screens.shop); });
       document.getElementById('btn-nav-upgrade').addEventListener('click', () => { renderUpgrades(); openModal(screens.upgrade); });
       document.getElementById('btn-nav-profile').addEventListener('click', () => { window.profileManager.render(); openModal(screens.profile); });
@@ -411,6 +421,7 @@
 
       // Initial Sync HUD
       window.shopManager.updateHUD();
+      updateMenuStageLabel();
     });
   </script>
 </body>
