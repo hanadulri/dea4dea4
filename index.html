@@ -70,10 +70,24 @@
             <span id="wind-text" style="font-weight: 700;">▶ 0.0 m/s</span>
           </div>
 
+          <!-- Radar Mini-map -->
+          <div class="minimap-card">
+            <div class="minimap-header">
+              <span>🗺️ 레이더 맵</span>
+              <span id="minimap-dist-text">거리 0m</span>
+            </div>
+            <canvas id="minimap-canvas" width="180" height="36"></canvas>
+          </div>
+
           <div class="target-info-card">
-            <span id="target-name-display" class="target-name">🎯 김현서</span>
-            <div class="target-hp-container">
-              <div id="target-hp-fill" class="target-hp-fill"></div>
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <span id="target-name-display" class="target-name">🎯 김현서</span>
+                <span id="target-distance-badge" class="target-distance-badge">거리 750m</span>
+              </div>
+              <div class="target-hp-container">
+                <div id="target-hp-fill" class="target-hp-fill"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -193,6 +207,18 @@
     </div>
   </div>
 
+  <!-- Mobile Landscape Orientation Helper Overlay -->
+  <div id="rotate-prompt-overlay">
+    <div class="rotate-icon">📱🔄</div>
+    <h3 style="font-size: 1.6rem; color: var(--accent-gold); font-weight: 800;">가로 모드로 회전해주세요!</h3>
+    <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 320px; line-height: 1.5;">
+      포트리스 대포 사격과 넓은 맵 시야를 위해 기기를 <strong>가로 모드(Landscape)</strong>로 돌리시면 가장 쾌적하게 즐기실 수 있습니다.
+    </p>
+    <button id="btn-dismiss-rotate" style="margin-top: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 8px 22px; border-radius: 999px; font-family: inherit; font-size: 0.95rem; cursor: pointer; font-weight: 700;">
+      그대로 플레이하기
+    </button>
+  </div>
+
   <!-- Scripts -->
   <script src="js/audio.js"></script>
   <script src="js/shop.js"></script>
@@ -271,6 +297,15 @@
         const muted = window.audioEngine.toggleMute();
         e.currentTarget.textContent = muted ? '🔇' : '🔊';
       });
+
+      // Dismiss Rotate Helper
+      const dismissBtn = document.getElementById('btn-dismiss-rotate');
+      if (dismissBtn) {
+        dismissBtn.addEventListener('click', () => {
+          const overlay = document.getElementById('rotate-prompt-overlay');
+          if (overlay) overlay.classList.add('dismissed');
+        });
+      }
 
       // Next Stage Button
       document.getElementById('btn-next-stage').addEventListener('click', () => {

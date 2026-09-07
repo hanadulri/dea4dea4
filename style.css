@@ -313,9 +313,9 @@ canvas#game-canvas {
 /* Top HUD */
 .game-hud-top {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
+  top: 10px;
+  left: 10px;
+  right: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -328,44 +328,89 @@ canvas#game-canvas {
   pointer-events: auto;
   background: rgba(15, 23, 42, 0.88);
   border: 1px solid var(--panel-border);
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
   backdrop-filter: blur(8px);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .wind-arrow {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   transition: transform 0.3s ease;
   color: var(--accent-cyan);
+}
+
+/* Minimap Card */
+.minimap-card {
+  pointer-events: auto;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.minimap-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.72rem;
+  color: var(--accent-gold);
+  font-weight: 700;
+  padding: 0 2px;
+}
+
+canvas#minimap-canvas {
+  width: 180px;
+  height: 36px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: block;
 }
 
 .target-info-card {
   pointer-events: auto;
   background: rgba(15, 23, 42, 0.88);
   border: 1px solid rgba(239, 68, 68, 0.4);
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   backdrop-filter: blur(8px);
 }
 
 .target-name {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 800;
   color: #f87171;
 }
 
+.target-distance-badge {
+  font-size: 0.75rem;
+  color: var(--accent-gold);
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .target-hp-container {
-  width: 110px;
-  height: 14px;
+  width: 105px;
+  height: 12px;
   background: rgba(0, 0, 0, 0.6);
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -1011,5 +1056,49 @@ canvas#game-canvas {
     padding: 10px 14px;
     font-size: 0.95rem;
     min-width: 90px;
+  }
+
+  canvas#minimap-canvas {
+    width: 140px;
+  }
+}
+
+/* ==========================================================================
+   LANDSCAPE MODE ENFORCEMENT & HELPER OVERLAY
+   ========================================================================== */
+#rotate-prompt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(16px);
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 24px;
+}
+
+@keyframes rotate-phone {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.rotate-icon {
+  font-size: 3.8rem;
+  animation: rotate-phone 2.5s infinite ease-in-out;
+}
+
+/* Show prompt only when screen is in portrait and on a mobile/tablet sized viewport */
+@media (max-width: 900px) and (orientation: portrait) {
+  #rotate-prompt-overlay:not(.dismissed) {
+    display: flex;
   }
 }
