@@ -1,4 +1,4 @@
-// Core Game & Physics Engine for Poop Fortress (Extended Map & Minimap)
+// Core Game & Physics Engine for Poop Fortress (Active Focus & Balanced Physics)
 class FortressEngine {
   constructor(canvasId) {
     this.canvas = document.getElementById(canvasId);
@@ -10,12 +10,14 @@ class FortressEngine {
 
     // Stage State
     this.stage = 1;
-    this.wind = 0; // -10 to +10 m/s
-    this.worldWidth = 2600; // Wide world map
+    this.wind = 0; // -3.5 to +3.5 m/s (mild, strategic wind)
+    this.worldWidth = 2600; // Wide panoramic world map
 
-    // Camera State
+    // Camera State (Horizontal & Vertical tracking)
     this.cameraX = 0;
     this.cameraTargetX = 0;
+    this.cameraY = 0;
+    this.cameraTargetY = 0;
 
     // Target Dummy State
     this.target = {
@@ -35,15 +37,15 @@ class FortressEngine {
       y: 450,
       barrelLength: 45,
       angle: 45, // degrees
-      angleSpeed: 0.85, // Slower, comfortable angle sweep
-      dir: 1, // 1 or -1
+      angleSpeed: 0.85,
+      dir: 1,
       minAngle: 15,
       maxAngle: 85
     };
 
-    // Power Gauge State (Slower, comfortable timing)
+    // Power Gauge State
     this.power = 0; // 0 to 100
-    this.powerSpeed = 1.15; // Slow and smooth oscillation
+    this.powerSpeed = 1.15; // Slower, comfortable gauge oscillation
     this.powerDir = 1;
 
     // Firing States: 'AIMING' -> 'CHARGING' -> 'FLYING' -> 'EXPLODING'
@@ -54,7 +56,7 @@ class FortressEngine {
     this.particles = [];
     this.damageTexts = [];
 
-    // Terrain height map across entire worldWidth
+    // Terrain height map
     this.terrainHeights = [];
     this.isRunning = false;
 
@@ -104,8 +106,8 @@ class FortressEngine {
     const stageBadge = document.getElementById('hud-stage-num');
     if (stageBadge) stageBadge.textContent = this.stage;
 
-    // Random Wind (-10 to +10)
-    const rawWind = (Math.random() * 20 - 10).toFixed(1);
+    // Mild Wind: -3.5 to +3.5 m/s (tactical and balanced)
+    const rawWind = (Math.random() * 7.0 - 3.5).toFixed(1);
     this.wind = parseFloat(rawWind);
     this.updateWindUI();
 
@@ -113,19 +115,19 @@ class FortressEngine {
     this.displayWidth = dims.width;
     this.displayHeight = dims.height;
 
-    // Cannon position on left side
+    // Cannon position
     this.cannon.x = 180;
     this.generateTerrain();
 
-    // Target Scarecrow position (random distance far across the world map)
+    // Target Scarecrow position across the wide map
     const minDistance = Math.max(650, this.displayWidth * 0.7);
     const minX = this.cannon.x + minDistance;
-    const maxX = this.worldWidth - 200;
+    const maxX = this.worldWidth - 220;
     const targetX = Math.floor(minX + Math.random() * (maxX - minX));
 
     const groundY = this.getTerrainY(targetX);
 
-    // Random Target Name: "김현서" or "박수홍"
+    // Target Name: "김현서" or "박수홍"
     const names = ['김현서', '박수홍'];
     const selectedName = names[Math.floor(Math.random() * names.length)];
 
@@ -142,9 +144,11 @@ class FortressEngine {
       hitState: 0
     };
 
-    // Camera reset to cannon
-    this.cameraX = Math.max(0, this.cannon.x - 120);
+    // Camera reset
+    this.cameraX = Math.max(0, this.cannon.x - 140);
     this.cameraTargetX = this.cameraX;
+    this.cameraY = 0;
+    this.cameraTargetY = 0;
 
     this.updateTargetHUD();
     this.gameState = 'AIMING';
@@ -171,7 +175,6 @@ class FortressEngine {
 
     for (let x = 0; x < width + 20; x++) {
       let h = baseHeight + Math.sin(x * freq1) * amp1 + Math.cos(x * freq2) * amp2;
-      // Flatten platform around cannon
       if (x < this.cannon.x + 90) {
         h = baseHeight + 10;
       }
@@ -283,13 +286,13 @@ class FortressEngine {
     if (window.audioEngine) window.audioEngine.playShoot();
 
     const rad = (this.cannon.angle * Math.PI) / 180;
-    // Power scale adjusted for large world map
-    const powerScale = 0.28;
-    const totalPower = Math.max(15, this.power) * powerScale;
+    // Lower velocity scale for high flight visibility (시인성 향상)
+    const powerScale = 0.18;
+    const totalPower = Math.max(12, this.power) * powerScale;
 
-    // Realistic wind drag / drift (never reverses backwards)
+    // Mild, balanced wind effect
     const windResistance = window.shopManager ? window.shopManager.getWindFactor() : 1.0;
-    const netWindAcc = (this.wind * 0.014) * windResistance;
+    const netWindAcc = (this.wind * 0.006) * windResistance;
 
     const startX = this.cannon.x + Math.cos(rad) * this.cannon.barrelLength;
     const startY = this.cannon.y - Math.sin(rad) * this.cannon.barrelLength;
@@ -300,10 +303,16 @@ class FortressEngine {
       vx: Math.cos(rad) * totalPower,
       vy: -Math.sin(rad) * totalPower,
       ax: netWindAcc,
-      gravity: 0.26,
+      gravity: 0.12, // Smooth, graceful flight arc
       weapon: weapon,
       trail: []
     };
+
+    // Instant camera focus right on the launched projectile!
+    this.cameraTargetX = Math.max(0, Math.min(this.worldWidth - this.displayWidth, startX - this.displayWidth * 0.35));
+    this.cameraX = this.cameraTargetX;
+    this.cameraY = 0;
+    this.cameraTargetY = 0;
   }
 
   updateControlsUI() {
@@ -331,7 +340,7 @@ class FortressEngine {
   }
 
   update() {
-    // 1. Angle sweep in AIMING state (slower, smooth)
+    // 1. Angle sweep in AIMING state
     if (this.gameState === 'AIMING') {
       if (isNaN(this.cannon.angle)) this.cannon.angle = 45;
       if (!this.cannon.dir) this.cannon.dir = 1;
@@ -346,7 +355,7 @@ class FortressEngine {
       }
     }
 
-    // 2. Power sweep in CHARGING state (slower, controllable)
+    // 2. Power sweep in CHARGING state
     if (this.gameState === 'CHARGING') {
       if (!this.powerDir) this.powerDir = 1;
       this.power += this.powerSpeed * this.powerDir;
@@ -363,13 +372,13 @@ class FortressEngine {
       if (markerEl) markerEl.style.left = `${this.power}%`;
     }
 
-    // 3. Projectile physics in FLYING state
+    // 3. Projectile physics & Active Projectile Camera Follow
     if (this.gameState === 'FLYING' && this.projectile) {
       const p = this.projectile;
 
-      // Realistic wind effect: prevent turning backwards like a boomerang!
-      if (p.vx + p.ax < 1.0) {
-        p.vx = Math.max(1.0, p.vx * 0.985);
+      // Realistic forward drag (never reverses backwards)
+      if (p.vx + p.ax < 0.9) {
+        p.vx = Math.max(0.9, p.vx * 0.99);
       } else {
         p.vx += p.ax;
       }
@@ -378,14 +387,25 @@ class FortressEngine {
       p.x += p.vx;
       p.y += p.vy;
 
-      // Clean trail (no lingering afterimages)
+      // Clean trail
       p.trail.push({ x: p.x, y: p.y, alpha: 1.0 });
-      if (p.trail.length > 10) p.trail.shift();
+      if (p.trail.length > 8) p.trail.shift();
 
       this.addSmokeParticle(p.x, p.y, p.weapon.color);
 
-      // Camera smoothly follows the flying projectile!
-      this.cameraTargetX = Math.max(0, Math.min(this.worldWidth - this.displayWidth, p.x - this.displayWidth * 0.45));
+      // Camera tightly centers horizontally on projectile
+      this.cameraTargetX = Math.max(0, Math.min(this.worldWidth - this.displayWidth, p.x - this.displayWidth * 0.48));
+
+      // Camera smoothly pans vertically if projectile ascends high
+      if (p.y < 100) {
+        this.cameraTargetY = Math.max(0, 100 - p.y);
+      } else {
+        this.cameraTargetY = 0;
+      }
+
+      // Responsive camera tracking
+      this.cameraX += (this.cameraTargetX - this.cameraX) * 0.22;
+      this.cameraY += (this.cameraTargetY - this.cameraY) * 0.18;
 
       // Collision with Target Dummy
       const tgt = this.target;
@@ -410,11 +430,11 @@ class FortressEngine {
       // Smoothly return camera to cannon view when not flying
       if (this.gameState !== 'EXPLODING') {
         this.cameraTargetX = Math.max(0, Math.min(this.worldWidth - this.displayWidth, this.cannon.x - 140));
+        this.cameraTargetY = 0;
       }
+      this.cameraX += (this.cameraTargetX - this.cameraX) * 0.10;
+      this.cameraY += (this.cameraTargetY - this.cameraY) * 0.12;
     }
-
-    // Smooth camera interpolation (lerp)
-    this.cameraX += (this.cameraTargetX - this.cameraX) * 0.12;
 
     // 4. Update particles
     for (let i = this.particles.length - 1; i >= 0; i--) {
@@ -422,7 +442,7 @@ class FortressEngine {
       pt.x += pt.vx;
       pt.y += pt.vy;
       pt.vy += pt.gravity || 0.1;
-      pt.alpha -= pt.decay || 0.025;
+      pt.alpha -= pt.decay || 0.028;
       if (pt.alpha <= 0) this.particles.splice(i, 1);
     }
 
@@ -443,16 +463,15 @@ class FortressEngine {
     const weapon = this.projectile ? this.projectile.weapon : { color: '#8B4513', damage: 30, radius: 25 };
     const isBig = weapon.id === 'cosmic' || weapon.id === 'rainbow';
 
-    // Clear projectile and lingering trail immediately to prevent afterimages!
+    // Clear projectile and lingering trail immediately
     this.projectile = null;
 
     if (window.audioEngine) window.audioEngine.playExplosion(isBig);
 
-    // Dynamic explosion particles (cleanly decay and disappear)
     const count = isBig ? 45 : 25;
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 2 + Math.random() * 6;
+      const speed = 2 + Math.random() * 5.5;
       this.particles.push({
         x: x,
         y: y,
@@ -462,7 +481,7 @@ class FortressEngine {
         size: 3 + Math.random() * 6,
         alpha: 1.0,
         decay: 0.035 + Math.random() * 0.02,
-        gravity: 0.25
+        gravity: 0.22
       });
     }
 
@@ -566,8 +585,9 @@ class FortressEngine {
     const width = this.displayWidth || 800;
     const height = this.displayHeight || 500;
     const camX = Math.round(this.cameraX);
+    const camY = Math.round(this.cameraY || 0);
 
-    // Thoroughly clear canvas every frame to prevent ghosting
+    // Thoroughly clear canvas
     this.ctx.clearRect(0, 0, width, height);
 
     // 1. Sky & Background gradient
@@ -578,26 +598,26 @@ class FortressEngine {
     this.ctx.fillStyle = skyGradient;
     this.ctx.fillRect(0, 0, width, height);
 
-    // Moon (parallax effect with camera)
+    // Moon with camera parallax
     const moonScreenX = (width - 80) - (camX * 0.08);
     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     this.ctx.beginPath();
-    this.ctx.arc(moonScreenX, 60, 20, 0, Math.PI * 2);
+    this.ctx.arc(moonScreenX, 60 + camY * 0.15, 20, 0, Math.PI * 2);
     this.ctx.fill();
 
-    // 2. Terrain Rendering (shifted by cameraX)
+    // 2. Terrain & Objects Rendering (shifted by cameraX and cameraY)
     this.ctx.save();
-    this.ctx.translate(-camX, 0);
+    this.ctx.translate(-camX, camY);
 
     this.ctx.beginPath();
-    this.ctx.moveTo(camX - 50, height);
+    this.ctx.moveTo(camX - 50, height - camY + 200);
     for (let x = Math.max(0, camX - 50); x <= Math.min(this.worldWidth, camX + width + 50); x += 4) {
       this.ctx.lineTo(x, this.terrainHeights[x] || (height - 120));
     }
-    this.ctx.lineTo(camX + width + 50, height);
+    this.ctx.lineTo(camX + width + 50, height - camY + 200);
     this.ctx.closePath();
 
-    const groundGrad = this.ctx.createLinearGradient(0, height - 160, 0, height);
+    const groundGrad = this.ctx.createLinearGradient(0, height - 160, 0, height + 200);
     groundGrad.addColorStop(0, '#334155');
     groundGrad.addColorStop(1, '#0f172a');
     this.ctx.fillStyle = groundGrad;
@@ -619,7 +639,7 @@ class FortressEngine {
       this.drawTrajectoryGuide();
     }
 
-    // 6. Projectile & Clean Trail
+    // 6. Projectile & Rotating Poop with High Visibility
     if (this.projectile) {
       const p = this.projectile;
       p.trail.forEach(t => {
@@ -631,10 +651,16 @@ class FortressEngine {
         this.ctx.globalAlpha = 1.0;
       });
 
-      this.ctx.font = '24px serif';
+      // Rotating Poop projectile aligned with flight path
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      const flightAngle = Math.atan2(p.vy, p.vx);
+      this.ctx.rotate(flightAngle);
+      this.ctx.font = '28px serif';
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'middle';
-      this.ctx.fillText(p.weapon.icon || '💩', p.x, p.y);
+      this.ctx.fillText(p.weapon.icon || '💩', 0, 0);
+      this.ctx.restore();
     }
 
     // 7. Particles
@@ -789,7 +815,7 @@ class FortressEngine {
 
   drawTrajectoryGuide() {
     const rad = ((this.cannon.angle || 45) * Math.PI) / 180;
-    const testPower = (this.gameState === 'CHARGING' ? Math.max(15, this.power) : 50) * 0.28;
+    const testPower = (this.gameState === 'CHARGING' ? Math.max(12, this.power) : 50) * 0.18;
 
     let simX = this.cannon.x + Math.cos(rad) * this.cannon.barrelLength;
     let simY = this.cannon.y - Math.sin(rad) * this.cannon.barrelLength;
@@ -797,21 +823,21 @@ class FortressEngine {
     let simVy = -Math.sin(rad) * testPower;
 
     const windResistance = window.shopManager ? window.shopManager.getWindFactor() : 1.0;
-    const netWindAcc = (this.wind * 0.014) * windResistance;
+    const netWindAcc = (this.wind * 0.006) * windResistance;
 
-    this.ctx.strokeStyle = 'rgba(251, 191, 36, 0.5)';
+    this.ctx.strokeStyle = 'rgba(251, 191, 36, 0.55)';
     this.ctx.lineWidth = 2;
     this.ctx.setLineDash([4, 4]);
     this.ctx.beginPath();
     this.ctx.moveTo(simX, simY);
 
     for (let i = 0; i < 22; i++) {
-      if (simVx + netWindAcc < 1.0) {
-        simVx = Math.max(1.0, simVx * 0.985);
+      if (simVx + netWindAcc < 0.9) {
+        simVx = Math.max(0.9, simVx * 0.99);
       } else {
         simVx += netWindAcc;
       }
-      simVy += 0.26;
+      simVy += 0.12;
       simX += simVx;
       simY += simVy;
       this.ctx.lineTo(simX, simY);
@@ -839,7 +865,7 @@ class FortressEngine {
     const scaleX = mW / this.worldWidth;
     const scaleY = mH / (this.displayHeight || 500);
 
-    // Draw Terrain silhouette
+    // Terrain silhouette
     mCtx.fillStyle = '#334155';
     mCtx.beginPath();
     mCtx.moveTo(0, mH);
@@ -852,14 +878,14 @@ class FortressEngine {
     mCtx.closePath();
     mCtx.fill();
 
-    // Draw Current Viewport Box (where player camera is looking)
+    // Current Viewport Box
     const viewX = this.cameraX * scaleX;
     const viewW = this.displayWidth * scaleX;
-    mCtx.strokeStyle = 'rgba(251, 191, 36, 0.8)';
+    mCtx.strokeStyle = 'rgba(251, 191, 36, 0.85)';
     mCtx.lineWidth = 1.5;
     mCtx.strokeRect(viewX, 1, viewW, mH - 2);
 
-    // Cannon indicator (Cyan dot)
+    // Cannon (Cyan dot)
     const cannonMapX = this.cannon.x * scaleX;
     const cannonMapY = this.cannon.y * scaleY;
     mCtx.fillStyle = '#06b6d4';
@@ -867,7 +893,7 @@ class FortressEngine {
     mCtx.arc(cannonMapX, cannonMapY, 3, 0, Math.PI * 2);
     mCtx.fill();
 
-    // Target indicator (Red flashing dot with label)
+    // Target (Red dot & Name)
     const targetMapX = this.target.x * scaleX;
     const targetMapY = this.target.y * scaleY;
     mCtx.fillStyle = '#ef4444';
@@ -875,13 +901,12 @@ class FortressEngine {
     mCtx.arc(targetMapX, targetMapY, 3.5, 0, Math.PI * 2);
     mCtx.fill();
 
-    // Target name flag on minimap
     mCtx.font = '8px sans-serif';
     mCtx.fillStyle = '#f87171';
     mCtx.textAlign = 'center';
     mCtx.fillText(this.target.name, targetMapX, targetMapY - 5);
 
-    // Flying Projectile indicator (Yellow glowing dot)
+    // Flying Projectile indicator (Glowing yellow dot)
     if (this.projectile) {
       const projMapX = this.projectile.x * scaleX;
       const projMapY = this.projectile.y * scaleY;
